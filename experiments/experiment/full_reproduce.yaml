@@ -1,0 +1,14 @@
+# @package _global_
+# Full 400k-step reproduction run (Level 4).
+# Target: FID-Inception ~3.46 with MAE 50% featurizer.
+
+n_gpus: 8
+max_steps: 400000
+
+hparams:
+  max_steps: 400000
+  warmup_steps: 10000
+
+trainer:
+  logger:
+    project: semot

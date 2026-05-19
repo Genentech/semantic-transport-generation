@@ -1,0 +1,147 @@
+defaults:
+  - model: dit_base_inet
+  - dataset: imagenet256_latent
+  - featurizer: mae_50
+  - callbacks: default
+  - launcher: slurm
+  - _self_
+  - optional experiment: null
+
+seed: 42
+n_nodes: 1
+ckpt_path: ${oc.select:_stable_ckpt_path,null}
+checkpoint_dir: ${hydra:runtime.output_dir}/checkpoints
+
+hparams:
+  img_size: ${img_size}
+  in_channels: ${in_channels}
+  num_classes: ${num_classes}
+
+  # --- Optimizer ---
+  lr: 4e-4
+  weight_decay: 0.0
+  grad_clip: 2.0
+
+  # --- EMA ---
+  ema_decays: [0.999, 0.9995, 0.9998, 0.9999]
+  ema_primary_decay: 0.999
+
+  # --- Sinkhorn Loss ---
+  epsilons: [0.02, 0.05, 0.2]
+  sinkhorn_iters: 4
+  sinkhorn_iters_sym: 2
+  sinkhorn_self_mask_diagonal: true
+  eps_scale: std
+
+  # --- Batch Composition ---
+  batch_n_gen: 64
+  batch_n_pos: 128
+  batch_n_unc: 32
+  n_classes_per_batch: 128
+  queue_size: 128
+  uncond_queue_size: 1000
+  queue_push_size: 64
+  queue_device: cuda
+  queue_pin_memory: false
+
+  # --- CFG ---
+  alpha_min: 1.0
+  alpha_max: 4.0
+  alpha_power: 5.0
+  alpha_fixed_prob: 0.0
+  alpha_fixed_value: 1.0
+
+  # --- Feature Extraction ---
+  feature_mode: key_facet
+  input_summary_mode: norm_x
+  featurizer_chunk_size: 32
+
+  # --- VAE ---
+  vae_model: null
+  vae_decode_chunk_size: 128
+  sample_viz_vae_model: stabilityai/sd-vae-ft-mse
+  sample_viz_vae_scaling_factor: 0.18215
+  sample_viz_vae_decode_chunk_size: 64
+
+  # --- Memory ---
+  dit_chunk_size: 64
+
+  # --- Compile ---
+  compile: false
+
+  # --- Schedule ---
+  steps_per_epoch: ${eval:'${train_size} // (${hparams.n_classes_per_batch} * ${hparams.batch_n_gen})'}
+  max_steps: ${max_steps}
+  warmup_steps: 10000
+
+# --- Trainer ---
+trainer:
+  _target_: lightning.Trainer
+  default_root_dir: ${hydra:runtime.output_dir}
+  max_steps: ${hparams.max_steps}
+  max_epochs: -1
+  accelerator: gpu
+  devices: ${n_gpus}
+  num_nodes: ${n_nodes}
+  strategy: ddp
+  precision: "bf16-mixed"
+  num_sanity_val_steps: 0
+  check_val_every_n_epoch: 10
+  log_every_n_steps: 50
+  gradient_clip_val: ${hparams.grad_clip}
+  gradient_clip_algorithm: norm
+  enable_checkpointing: true
+  limit_val_batches: 1
+
+  logger:
+    _target_: lightning.pytorch.loggers.WandbLogger
+    save_dir: ${trainer.default_root_dir}
+    log_model: false
+    project: semot
+
+# --- Data ---
+data:
+  _target_: stable_pretraining.data.DataModule
+
+  train:
+    batch_size: ${eval:'(${hparams.n_classes_per_batch} * ${hparams.batch_n_gen}) // (${n_gpus} * ${n_nodes})'}
+    num_workers: ${cpus_per_task}
+    drop_last: true
+    shuffle: true
+    pin_memory: true
+    persistent_workers: true
+    prefetch_factor: 4
+
+  val:
+    batch_size: ${eval:'(${hparams.n_classes_per_batch} * ${hparams.batch_n_gen}) // (${n_gpus} * ${n_nodes})'}
+    num_workers: ${cpus_per_task}
+    pin_memory: true
+    persistent_workers: true
+    prefetch_factor: 4
+
+# --- Module ---
+module:
+  _target_: semot.module.CompatibleModule
+
+  forward: semot.forward.training_forward
+
+  hparams: ${hparams}
+
+  optim:
+    optimizer:
+      type: AdamW
+      lr: ${hparams.lr}
+      betas: [0.9, 0.95]
+      weight_decay: ${hparams.weight_decay}
+    scheduler:
+      type: LinearWarmup
+      total_steps: ${hparams.max_steps}
+      peak_step: ${hparams.warmup_steps}
+    interval: step
+
+hydra:
+  run:
+    dir: ./outputs/runs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
+  sweep:
+    dir: ./outputs/runs/${now:%Y-%m-%d}/${now:%H-%M-%S-%f}
+    subdir: ${hydra.job.num}

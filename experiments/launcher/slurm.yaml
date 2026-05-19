@@ -1,0 +1,45 @@
+# @package _global_
+# SLURM launcher configuration.
+# Adapt partition, account, qos, and paths to your cluster.
+
+defaults:
+  - override /hydra/launcher: submitit_slurm
+
+cpus_per_task: 4
+cache_dir: ./data
+
+# Checkpoint directory (uses SLURM_JOB_ID for stability across requeues)
+_stable_ckpt_dir: ./outputs/checkpoints/${oc.env:SLURM_JOB_ID,local}
+_stable_ckpt_path: ${_stable_ckpt_dir}/last.ckpt
+
+ckpt_path: ${_stable_ckpt_path}
+checkpoint_dir: ${_stable_ckpt_dir}
+
+trainer:
+  default_root_dir: ${_stable_ckpt_dir}
+
+hydra:
+  mode: MULTIRUN
+
+  sweep:
+    dir: ./outputs/runs/job_${oc.env:SLURM_JOB_ID,local}
+    subdir: ${hydra.job.num}
+
+  launcher:
+    # --- Adapt these to your cluster ---
+    account: my_account
+    partition: my_partition
+    qos: my_qos
+    timeout_min: 10080  # 1 week
+    cpus_per_task: ${cpus_per_task}
+    mem_gb: ${eval:'50 + ${n_gpus} * 110'}
+    nodes: ${n_nodes}
+    gres: gpu:${n_gpus}
+    tasks_per_node: ${n_gpus}
+
+    signal_delay_s: 120
+    max_num_timeout: 100
+
+    setup:
+      - export TOKENIZERS_PARALLELISM=false
+      - export NCCL_DEBUG=WARN

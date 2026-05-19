@@ -1,0 +1,22 @@
+# @package _global_
+# Short 1000-step test run for reproducibility verification.
+# Compare loss curves to old code running with equivalent config.
+
+n_gpus: 8
+max_steps: 1000
+
+hparams:
+  max_steps: 1000
+  warmup_steps: 100
+  # Smaller batches for faster iteration during testing
+  n_classes_per_batch: 64
+  batch_n_gen: 32
+  batch_n_pos: 64
+  batch_n_unc: 16
+
+trainer:
+  log_every_n_steps: 10
+  check_val_every_n_epoch: 999
+  limit_val_batches: 0
+  logger:
+    project: semot-test

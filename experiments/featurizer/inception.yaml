@@ -1,0 +1,26 @@
+# @package _global_
+# Inception-distilled ViT-H featurizer.
+# Student trained on SD-VAE latents to match frozen InceptionV3 pool3 features.
+# Taps every 8 layers (same as MAE).
+hparams:
+  featurizer_name: inception_distill
+
+module:
+  featurizer:
+    _target_: semot.featurizer.ViTFeaturizer
+    in_channels: 4
+    img_size: 32
+    patch_size: 2
+    hidden_dim: 1280
+    depth: 32
+    num_heads: 16
+    mlp_ratio: 4.0
+    extract_every_n_layers: 8
+    decoder_dim: 512
+    decoder_depth: 4
+    decoder_num_heads: 16
+    use_cls_token: false
+    checkpoint_key: ema:0.9995
+    pretrained_checkpoint: hf://huguesva/semantic-transport-generation/featurizers/vit-h-inception-distill.pt
+    freeze: true
+    activation_checkpointing: true

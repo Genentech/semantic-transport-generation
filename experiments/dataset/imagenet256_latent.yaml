@@ -1,0 +1,24 @@
+# @package _global_
+# ImageNet 256 latent-space training (SD-VAE latents, 32x32x4).
+dataset_name: imagenet256_latent
+latent_dir: ./data/imagenet256_latents
+img_size: 32
+in_channels: 4
+num_classes: 1000
+train_size: 1281167
+max_steps: 400000
+n_gpus: 8
+cpus_per_task: 8
+
+data:
+  train:
+    dataset:
+      _target_: semot.dataset.LatentShardDataset
+      shard_dir: ${latent_dir}/train
+      random_flip: true
+
+  val:
+    dataset:
+      _target_: semot.dataset.LatentShardDataset
+      shard_dir: ${latent_dir}/val
+      random_flip: false

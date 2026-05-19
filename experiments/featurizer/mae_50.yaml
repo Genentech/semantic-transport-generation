@@ -1,0 +1,25 @@
+# @package _global_
+# Frozen ViT-H MAE featurizer (mask 50%, cls-finetuned).
+# Paper Table 2, best result: FID-Inc = 3.46
+hparams:
+  featurizer_name: mae_50mask
+
+module:
+  featurizer:
+    _target_: semot.featurizer.ViTFeaturizer
+    in_channels: 4
+    img_size: 32
+    patch_size: 2
+    hidden_dim: 1280
+    depth: 32
+    num_heads: 16
+    mlp_ratio: 4.0
+    extract_every_n_layers: 8
+    decoder_dim: 512
+    decoder_depth: 4
+    decoder_num_heads: 16
+    use_cls_token: false
+    checkpoint_key: ema:0.9995
+    pretrained_checkpoint: hf://huguesva/semantic-transport-generation/featurizers/vit-h-mae-50.pt
+    freeze: true
+    activation_checkpointing: true
