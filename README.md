@@ -3,8 +3,6 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2606.00514-b31b1b.svg)](https://arxiv.org/abs/2606.00514)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Checkpoints-yellow)](https://huggingface.co/huguesva/semantic-transport-generation)
 
-Official implementation of the NeurIPS 2026 paper.
-
 We introduce an architecture for one-step image generation where a generator maps noise to an image in a single forward pass inside a pretrained autoencoder's latent space. On top of this latent space, we train a frozen self-supervised featurizer that provides semantic features. The distributional matching loss used to train the generator is defined in this semantic feature space. At inference, only the generator and decoder are needed (one forward pass, no featurizer, no iterative sampling).
 
 <p align="center">
