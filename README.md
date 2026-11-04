@@ -69,13 +69,13 @@ Generators and featurizers are available at [huguesva/semantic-transport-generat
 ## Citation
 
 ```bibtex
-@misc{vanassel2026generatereconstructionspacematch,
-      title={Generate in Reconstruction Space, Match in Semantic Space: Transport Geometry for One-Step Generation}, 
+@inproceedings{vanassel2026generatereconstructionspacematch,
+      title={Generate in Reconstruction Space, Match in Semantic Space: Transport Geometry for One-Step Generation},
       author={Hugues Van Assel and Edward De Brouwer and Saeed Saremi and Gabriele Scalia and Aviv Regev},
+      booktitle={Advances in Neural Information Processing Systems},
       year={2026},
       eprint={2606.00514},
       archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2606.00514}, 
+      url={https://arxiv.org/abs/2606.00514},
 }
 ```
